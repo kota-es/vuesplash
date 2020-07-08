@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Requests\StorePhoto;
+use App\Http\Requests\StorePhoto;
 use App\Photo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,16 +36,16 @@ class PhotoController extends Controller
         // S3にファイルを保存する
         // 第三引数の'public'はファイルを公開状態で保存するため
         Storage::cloud()
-            ->putFileAs('', $request->photo, $photo->fileitem, 'public');
+            ->putFileAs('', $request->photo, $photo->filename, 'public');
 
         // データベースエラー時にファイル削除を行うため
         // トランザクションを利用する
         DB::beginTransaction();
-        
+
         try {
             Auth::user()->photos()->save($photo);
             DB::commit();
-        }catch(\Exception $exception) {
+        } catch (\Exception $exception) {
             DB::rollBack();
             // DBとの不整合を避けるためアップロードしたファイルを削除
             Storage::cloud()->delete($photo->filename);
@@ -54,6 +54,6 @@ class PhotoController extends Controller
 
         // リソースの新規作成なので
         // レスポンスコードは201(CREATED)を返却する
-        return response($photo, 201);        
-    } 
+        return response($photo, 201);
+    }
 }
